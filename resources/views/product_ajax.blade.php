@@ -19,7 +19,7 @@
 	<div class="container">
 		<a href="#" class="btn btn-success btn-add">Add</a>
 		<div class="table-responsive">
-			<table class="table table-hover">
+			<table class="table table-hover" id= "product-table">
 				<thead>
 					<tr>
 						<th>ID</th>
@@ -29,14 +29,14 @@
 						<th>QUANTITY</th>
 					</tr>
 				</thead>
-				<tbody>
+				<tbody id="product-tbody">
 					
 					{{-- biến $todos được controller trả cho view
 					chứa dữ liệu tất cả các bản ghi trong bảng todos. Dùng foreach để hiển
 					thị từng bản ghi ra table này. --}}
 					
 					@foreach ($products as $product)
-					<tr>
+					<tr id="product-tr-{{ $product->id }}">
 						<td>{{$product->id}}</td>
 						<td>{{$product->code}}</td>
 						<td>{{$product->name}}</td>
@@ -45,7 +45,7 @@
 						<td>
 							<button type="button" class="btn btn-info btn-show" data-url = "{{route('products-ajax.show',$product->id)}}">Details</button>
 							<button type="button" class="btn btn-warning btn-edit" data-url="{{ route('products-ajax.edit',$product->id) }}">Edit</button>
-							<button type="button" class="btn btn-danger btn-delete" data-url="{{ route('products-ajax.destroy',$product->id) }}">Delete</button>
+							<button type="button" class="btn btn-danger btn-delete" data-url="{{ route('products-ajax.destroy',$product->id) }}" data-id ="{{$product->id}}">Delete</button>
 	
 						</td>
 					</tr>
@@ -61,7 +61,7 @@
 			<div class="modal-content">
 				<div class="modal-header">
 					<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-					<h4 class="modal-title">Show name</h4>
+					<h4 class="modal-title">Show info</h4>
 				</div>
 				<div class="modal-body" style="text-align: center;">
 					<div class="row">
@@ -185,7 +185,8 @@
 
 		$(document).ready(function () {
 		//bat su kien khi click nut detail
-			$('.btn-show').click(function(){
+			//$('.btn-show').click(function(){
+			$('#product-table').on('click', '.btn-show', function() {
 				$('#modal-show').modal('show');
 				var url = $(this).attr('data-url');
 				$.ajax({
@@ -231,25 +232,38 @@
 					data: data,
 					success: function (response) {
 						if($.isEmptyObject(response.errors)){
+
 							toastr.success('Add new product success!')
 							$('#modal-add').modal('hide');
-							setTimeout(function () {
-								window.location.href="{{ route('products-ajax.index') }}";
-							},800);
+							// setTimeout(function () {
+							// 	window.location.href="{{ route('products-ajax.index') }}";
+							// },800);
+							//console.log(response);
+							$('#product-tbody').prepend(`
+								<tr>
+									<td>`+response.data.id+`</td>
+									<td>`+response.data.code+`</td>
+									<td>`+response.data.name+`</td>
+									<td>`+response.data.price+`</td>
+									<td>`+response.data.quantity+`</td>
+									<td>
+										
+										<button type="button" class="btn btn-info btn-show" data-url="/products-ajax/`+response.data.id+`"​>Details</button>
+										<button type="button" class="btn btn-warning btn-edit" data-url="/products-ajax/`+response.data.id+`/edit"​>Edit</button>
+										<button type="button" class="btn btn-danger btn-delete" data-url="/products-ajax/`+response.data.id+`" data-id ="`+response.data.id+`">Delete</button>
+									</td>
+								</tr>
+							`);
+							$('#code-add').val("");
+							$('#name-add').val("");
+							$('#price-add').val("");
+							$('#quantity-add').val("");
 						}
 						else{
 							$.each(response.errors, function(key,value){
 								toastr.warning(value)
 							});
 						}
-						// hiện thông báo thêm mới thành công bằng toastr
-						//toastr.success('Add new product success!')
-						//ẩn modal add đi
-						//console.log(response);
-						//$('#modal-add').modal('hide');
-						// setTimeout(function () {
-						// 	window.location.href="{{ route('products-ajax.index') }}";
-						// },800);
 					},
 					error: function (jqXHR, textStatus, errorThrown) {
 						
@@ -257,21 +271,26 @@
 				})
 			})
 			
-			$('.btn-delete').click(function () {
+			//$('.btn-delete').click(function () {
 				//lấy attribute data-url của nút xoá lưu vào url
+			$('#product-table').on('click', '.btn-delete', function() {
 				var url=$(this).attr('data-url');
+				var id=$(this).attr('data-id');
 				//hiển thị dialogbox xác nhận xoá
+				console.log(id);
 				if (confirm("Are you sure?")){
 					$.ajax({
 						//phương thức delete
 						type: 'delete',
 						url: url,
 						success: function (response) {
+							$('#product-tr-'+response.id).remove();
 							//thông báo xoá thành công bằng toastr
 							toastr.warning('delete product success!')
-							setTimeout(function () {
-								window.location.href="{{ route('products-ajax.index') }}";
-							},800);
+							// setTimeout(function () {
+							// 	window.location.href="{{ route('products-ajax.index') }}";
+							// },800);
+							
 						},
 						error: function (error) {
 							
@@ -281,7 +300,8 @@
 			})
 
 			//bắt sự kiện click vào nút edit
-			$('.btn-edit').click(function (e) {
+			//$('.btn-edit').click(function (e) {
+			$('#product-table').on('click', '.btn-edit', function(e) {
 				//mở modal edit lên
 				$('#modal-edit').modal('show');
 				e.preventDefault();
@@ -330,9 +350,26 @@
 							toastr.success('edit product success!')
 							//ẩn modal edit
 							$('#modal-edit').modal('hide');
-							setTimeout(function () {
-								window.location.href="{{ route('products-ajax.index') }}";
-							},800);
+							// setTimeout(function () {
+							// 	window.location.href="{{ route('products-ajax.index') }}";
+							// },800);
+							$('#product-tr-'+response.data.id).html(`
+								<td>`+response.data.id+`</td>
+									<td>`+response.data.code+`</td>
+									<td>`+response.data.name+`</td>
+									<td>`+response.data.price+`</td>
+									<td>`+response.data.quantity+`</td>
+									<td>
+										
+										<button type="button" class="btn btn-info btn-show" data-url="/products-ajax/`+response.data.id+`"​>Details</button>
+										<button type="button" class="btn btn-warning btn-edit" data-url="/products-ajax/`+response.data.id+`/edit"​>Edit</button>
+										<button type="button" class="btn btn-danger btn-delete" data-url="/products-ajax/`+response.data.id+`" data-id ="`+response.data.id+`">Delete</button>
+									</td>
+							`);
+							$('#code-edit').val(""),
+							$('#name-edit').val(""),
+							$('#price-edit').val(""),
+							$('#quantity-edit').val("")
 						}
 						else{
 							$.each(response.errors, function(key, value){

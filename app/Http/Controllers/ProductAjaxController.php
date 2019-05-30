@@ -86,8 +86,9 @@ class ProductAjaxController extends Controller
     public function update(Request $request, $id)
     {
         //
+        $product1 = Product::find($id);
         $validator = Validator::make($request->all(),[
-            'code' => 'required|max:5|unique:products,code',
+            'code' => 'required|max:5|unique:products,code,'.$product1->code,
             'name' => 'required',
             'price' => 'required|int',
             'quantity' => 'required|int',
@@ -95,7 +96,8 @@ class ProductAjaxController extends Controller
         if($validator->fails()){
             return response()->json(['errors'=>$validator->errors()->all()]);
         }
-        $product = Product::find($id)->update($request->all());
+        $data = Product::find($id)->update($request->all());
+        $product = Product::find($id);
         return response()->json(['data'=>$product],200);
     }
 
@@ -109,6 +111,6 @@ class ProductAjaxController extends Controller
     {
         //
         Product::find($id)->delete();
-        return response()->json(['data'=>'removed'],200);
+        return response()->json(['data'=>'removed','id'=>$id],200);
     }
 }
