@@ -14,6 +14,7 @@
 Route::get('/', function () {
     return view('welcome');
 });
+Route::resource('products-ajax','ProductAjaxController');
 
 Route::get('events','EventController@index')->name('events.index');
 
@@ -24,3 +25,4 @@ Route::get('events/edit/{id}','EventController@edit')->name('events.edit');
 Route::put('events/update/{id}','EventController@update')->name('events.update');
 
 Route::delete('events/{id}','EventController@destroy')->name('events.destroy');
+
